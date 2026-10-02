@@ -1,0 +1,118 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Job {
+  id           Int         @id @default(autoincrement())
+  judul        String
+  departemen   String
+  deskripsi    String      @default("")
+  syarat       String      @default("")
+  status       String      @default("buka") // buka | tutup
+  tanggalMulai String? // YYYY-MM-DD
+  createdAt    String // ISO
+  candidates   Candidate[]
+}
+
+model Candidate {
+  id             Int              @id @default(autoincrement())
+  nama           String
+  email          String           @unique
+  telepon        String           @default("")
+  cv             String           @default("")
+  tahap          String           @default("melamar")
+  jobId          Int
+  job            Job              @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  createdAt      String // ISO
+  histories      StageHistory[]
+  scoreSheets    ScoreSheet[]
+  interviews     Interview[]
+  availabilities CandidateSlot[]
+}
+
+model StageHistory {
+  id          Int       @id @default(autoincrement())
+  candidateId Int
+  candidate   Candidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  dari        String
+  ke          String
+  waktu       String // ISO
+  oleh        String    @default("")
+  catatan     String    @default("")
+}
+
+model RubricCriterion {
+  id     Int     @id @default(autoincrement())
+  nama   String
+  bobot  Float
+  scores Score[]
+}
+
+model Interviewer {
+  id          Int               @id @default(autoincrement())
+  nama        String
+  email       String            @unique
+  slots       InterviewerSlot[]
+  scoreSheets ScoreSheet[]
+  interviews  Interview[]
+}
+
+model ScoreSheet {
+  id            Int         @id @default(autoincrement())
+  candidateId   Int
+  candidate     Candidate   @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  interviewerId Int
+  interviewer   Interviewer @relation(fields: [interviewerId], references: [id], onDelete: Cascade)
+  tahap         String      @default("interview")
+  waktu         String // ISO
+  scores        Score[]
+
+  @@unique([candidateId, interviewerId, tahap])
+}
+
+model Score {
+  id          Int             @id @default(autoincrement())
+  sheetId     Int
+  sheet       ScoreSheet      @relation(fields: [sheetId], references: [id], onDelete: Cascade)
+  criterionId Int
+  criterion   RubricCriterion @relation(fields: [criterionId], references: [id])
+  skor        Float
+
+  @@unique([sheetId, criterionId])
+}
+
+model InterviewerSlot {
+  id            Int         @id @default(autoincrement())
+  interviewerId Int
+  interviewer   Interviewer @relation(fields: [interviewerId], references: [id], onDelete: Cascade)
+  tanggal       String // YYYY-MM-DD
+  mulai         String // HH:MM
+  selesai       String // HH:MM
+}
+
+model CandidateSlot {
+  id          Int       @id @default(autoincrement())
+  candidateId Int
+  candidate   Candidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  tanggal     String // YYYY-MM-DD
+  mulai       String // HH:MM
+  selesai     String // HH:MM
+}
+
+model Interview {
+  id            Int         @id @default(autoincrement())
+  candidateId   Int
+  candidate     Candidate   @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  interviewerId Int
+  interviewer   Interviewer @relation(fields: [interviewerId], references: [id], onDelete: Cascade)
+  tanggal       String // YYYY-MM-DD
+  mulai         String // HH:MM
+  selesai       String // HH:MM
+  catatan       String      @default("")
+  createdAt     String // ISO
+}
