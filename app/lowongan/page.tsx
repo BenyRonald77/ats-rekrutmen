@@ -15,7 +15,7 @@ export default function LowonganPage() {
   const [err, setErr] = useState("");
 
   const load = () => fetch("/api/jobs").then((r) => r.json()).then(setJobs);
-  useEffect(load, []);
+  useEffect(() => { load(); }, []);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
